@@ -1,5 +1,4 @@
 use std::mem::size_of;
-use std::path::Path;
 
 use windows::core::imp::CloseHandle;
 use windows::core::PCSTR;
@@ -24,14 +23,6 @@ pub unsafe fn get_guid() -> String {
     format!("{sig:032X}{age:X}")
 }
 
-pub unsafe fn get_shell32_offset() -> u64 {
-    let modinfo = get_all_shell32_modinfos()
-        .into_iter()
-        .next()
-        .expect("no explorer process found");
-    modinfo.BaseOfImage
-}
-
 // Return handles for every running explorer.exe process (case-insensitive match on file name).
 pub unsafe fn get_explorer_handles() -> Vec<HANDLE> {
     let sys = sysinfo::System::new_with_specifics(
@@ -44,7 +35,9 @@ pub unsafe fn get_explorer_handles() -> Vec<HANDLE> {
             if let Some(p) = proc.exe() {
                 if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
                     if name.eq_ignore_ascii_case("explorer.exe") {
-                        return Some(OpenProcess(PROCESS_ALL_ACCESS, FALSE, proc.pid().as_u32()).unwrap());
+                        return Some(
+                            OpenProcess(PROCESS_ALL_ACCESS, FALSE, proc.pid().as_u32()).unwrap(),
+                        );
                     }
                 }
             }
